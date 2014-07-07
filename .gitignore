@@ -1,0 +1,7 @@
+*.swp
+*.un~
+.cscope
+*.d
+*.elf
+*.map
+*.o
