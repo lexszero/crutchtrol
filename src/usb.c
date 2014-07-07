@@ -1,27 +1,10 @@
-/*
- * This file is part of the libopencm3 project.
- *
- * Copyright (C) 2010 Gareth McMullin <gareth@blacksphere.co.nz>
- *
- * This library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this library.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-#include <stdlib.h>
+#include "common.h"
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/cdc.h>
+
+static usbd_device *usb;
 
 static const struct usb_device_descriptor dev = {
 	.bLength = USB_DT_DEVICE_SIZE,
@@ -158,9 +141,9 @@ static const struct usb_config_descriptor config = {
 };
 
 static const char *usb_strings[] = {
-	"Black Sphere Technologies",
-	"CDC-ACM Demo",
-	"DEMO",
+	"LexsZero",
+	"Crutchtrol",
+	"0xDEADBEEF",
 };
 
 /* Buffer to be used for control requests. */
@@ -232,7 +215,6 @@ static void cdcacm_set_config(usbd_device *usbd_dev, uint16_t wValue)
 				cdcacm_control_request);
 }
 
-
 static void usb_setup(void)
 {
 	/* Enable clocks for GPIO port A (for GPIO_USART2_TX) and USART2. */
@@ -245,22 +227,26 @@ static void usb_setup(void)
 	gpio_set_af(GPIOA, GPIO_AF14, GPIO11| GPIO12);
 }
 
-int main(void)
+void task_usb(void *arg)
 {
-	int i;
+	(void)arg;
 
-	usbd_device *usbd_dev;
-
-	rcc_clock_setup_hsi(&hsi_8mhz[CLOCK_48MHZ]);
 	usb_setup();
-
-	usbd_dev = usbd_init(&stm32f103_usb_driver, &dev, &config, usb_strings,
+	usb = usbd_init(&stm32f103_usb_driver, &dev, &config, usb_strings,
 			3, usbd_control_buffer, sizeof(usbd_control_buffer));
-	usbd_register_set_config_callback(usbd_dev, cdcacm_set_config);
+	usbd_register_set_config_callback(usb, cdcacm_set_config);
 
-	for (i = 0; i < 0x800000; i++)
-		__asm__("nop");
+	vTaskDelay(50);
+	
+	while (1) {
+		usbd_poll(usb);
+		taskYIELD();
+	}
+}
 
-	while (1)
-		usbd_poll(usbd_dev);
+void usb_send(uint8_t *buf, uint8_t len)
+{
+	if (!usb)
+		return;
+	usbd_ep_write_packet(usb, 0x82, buf, len);
 }

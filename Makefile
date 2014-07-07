@@ -19,8 +19,13 @@
 
 BINARY = crutchtrol-fw
 
-OPENCM3_DIR = ../libopencm3
-LDSCRIPT = $(OPENCM3_DIR)/lib/stm32/f3/libopencm3_stm32f3.ld
+CSRC = $(wildcard freertos/*.c src/*.c)
+OBJS += $(CSRC:.c=.o)
 
-include ../libopencm3.target.mk
+CFLAGS += -Ifreertos
+
+LDSCRIPT = ./stm32f3-discovery.ld
+
+OPENCM3_DIR = ./libopencm3
+include ./libopencm3.target.mk
 

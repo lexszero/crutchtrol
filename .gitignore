@@ -4,4 +4,5 @@
 *.d
 *.elf
 *.map
+*.hex
 *.o
