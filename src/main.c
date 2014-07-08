@@ -6,7 +6,6 @@
 
 static void systick_setup(void)
 {
-	/* clock rate / 1000 to get 1mS interrupt rate */
 	systick_set_frequency(configTICK_RATE_HZ, configCPU_CLOCK_HZ);
 	systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
 	systick_counter_enable();
@@ -25,11 +24,9 @@ static void gpio_setup(void)
 static void task_blink(void *arg)
 {
 	(void)arg;
-	char *b = ".";
 	while (1) {
 		gpio_toggle(GPIOE, GPIO8);	/* LED on/off */
-		usb_send(b, 1);
-		vTaskDelay(100);
+		vTaskDelay(500);
 	}
 }
 
@@ -51,14 +48,16 @@ void vApplicationStackOverflowHook(TaskHandle_t task, char *name )
 }
 
 extern void task_usb(void*);
+extern void task_ir_ranger(void*);
 int main(void)
 {
 	rcc_clock_setup_hsi(&hsi_8mhz[CLOCK_48MHZ]);
 	gpio_setup();
 	systick_setup();
 	
-	xTaskCreate(task_usb, "usb", 4096, NULL, 0, NULL);
-	xTaskCreate(task_blink, "blink", 256, NULL, 1, NULL);
+	xTaskCreate(task_usb,		"usb",			4096,	NULL,	3,	NULL);
+	xTaskCreate(task_blink,		"blink",		256,	NULL,	4,	NULL);
+	xTaskCreate(task_ir_ranger,	"ir_ranger",	1024,	NULL,	3,	NULL);
 	vTaskStartScheduler();
 	for(;;);
 }

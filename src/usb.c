@@ -1,4 +1,6 @@
 #include "common.h"
+#include "printf.h"
+#include <string.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/usb/usbd.h>
@@ -239,14 +241,22 @@ void task_usb(void *arg)
 	vTaskDelay(50);
 	
 	while (1) {
+		gpio_toggle(GPIOE, GPIO10);
 		usbd_poll(usb);
 		taskYIELD();
 	}
 }
 
-void usb_send(uint8_t *buf, uint8_t len)
+void usb_send(void *buf, uint8_t len)
 {
 	if (!usb)
 		return;
 	usbd_ep_write_packet(usb, 0x82, buf, len);
+}
+
+void usb_send_int(int value)
+{
+	char buf[25] = {0};
+	tfp_sprintf(buf, "%d\r\n", value);
+	usb_send(buf, strlen(buf));
 }
