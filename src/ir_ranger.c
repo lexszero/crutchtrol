@@ -46,7 +46,7 @@ void task_ir_ranger(void *arg)
 		if (v > v_old + DELTA ||
 			v < v_old - DELTA) {
 			v_old = v;
-			usb_send_int(v);
+			cdc_send_int(v);
 		}
 		vTaskDelay(12);
 	}
