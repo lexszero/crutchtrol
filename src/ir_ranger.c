@@ -3,7 +3,12 @@
 #include <libopencm3/stm32/adc.h>
 #include <libopencm3/stm32/gpio.h>
 
-#define DELTA 10
+#include "usb_cdc.h"
+#include "usb_midi.h"
+
+#define DELTA 3
+#define IR_MAX 4096
+#define IR_MIN 300
 
 static void adc_setup(void)
 {
@@ -31,7 +36,7 @@ extern void usb_send_int(int value);
 void task_ir_ranger(void *arg)
 {
 	(void)arg;
-	uint16_t v, v_old;
+	int v, v_old;
 
 	adc_setup();
 	vTaskDelay(500);
@@ -41,12 +46,20 @@ void task_ir_ranger(void *arg)
 		while (! adc_eoc(ADC1))
 			taskYIELD();
 		v = adc_read_regular(ADC1);
-		if (v < 300)
+		if (v < IR_MIN) {
 			v = 0;
+			midi_msg(0, EV_NOTE_OFF, 0, v_old, 0);
+		}
+		else {
+			v = ((v-IR_MIN)*128)/(IR_MAX-IR_MIN);
+		}
 		if (v > v_old + DELTA ||
 			v < v_old - DELTA) {
+			midi_msg(0, EV_NOTE_OFF, 0, v_old, 64);
 			v_old = v;
 			cdc_send_int(v);
+			midi_msg(0, EV_NOTE_ON, 0, v, 64);
+			//midi_msg(0, EV_CONTROL, 0, 0, v);
 		}
 		vTaskDelay(12);
 	}

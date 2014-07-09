@@ -3,11 +3,14 @@
 
 #include "usb.h"
 
-#define USB_CLASS_AUDIO		0x01
-#define USB_SUBCLASS_MIDI	0x03
-
 #define ENDP_DIR_IN		0x80
 #define ENDP_DIR_OUT	0x00
+
+#define midi_endp_in(n)	(ENDP_DIR_IN | n)
+
+#ifdef USB_DESCRIPTORS
+#define USB_CLASS_AUDIO		0x01
+#define USB_SUBCLASS_MIDI	0x03
 
 #define DT_HEADER		0x01
 #define DT_IN_JACK		0x02
@@ -20,7 +23,6 @@
 #define JACK_TYPE_EMBEDDED		0x01
 #define JACK_TYPE_EXTERNAL		0x02
 
-#ifdef USB_DESCRIPTORS
 struct midi_header_descriptor {
 	uint8_t bFunctionLength;
 	uint8_t bDescriptorType;
@@ -123,7 +125,7 @@ static const struct usb_endpoint_descriptor midi_endp[] = {
 {
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
-	.bEndpointAddress = ENDP_DIR_IN | 0x1,
+	.bEndpointAddress = midi_endp_in(1),
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 	.wMaxPacketSize = 64,
 	.bInterval = 0,
@@ -151,6 +153,18 @@ static const struct usb_interface_descriptor midi_iface[] = {{
 }};
 
 #endif /* USB_DESCRIPTORS */
+
+typedef enum {
+	EV_NOTE_OFF		= 0x8,
+	EV_NOTE_ON		= 0x9,
+	EV_AFTERTOUCH	= 0xA,
+	EV_CONTROL		= 0xB,
+	EV_PROG_CHANGE	= 0xC,
+	EV_CHAN_PRESS	= 0xD,
+	EV_PITCH		= 0xE
+} midi_event_type;
+
+extern void midi_msg(uint8_t cable, midi_event_type type, uint8_t chan, uint8_t data1, uint8_t data2);
 
 extern void midi_set_config(usbd_device *usbd_dev);
 
