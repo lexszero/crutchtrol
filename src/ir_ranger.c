@@ -6,7 +6,7 @@
 #include "usb_cdc.h"
 #include "usb_midi.h"
 
-#define DELTA 3
+#define DELTA 0
 #define IR_MAX 4096
 #define IR_MIN 300
 
@@ -48,10 +48,17 @@ void task_ir_ranger(void *arg)
 		v = adc_read_regular(ADC1);
 		if (v < IR_MIN) {
 			v = 0;
-			midi_msg(0, EV_NOTE_OFF, 0, v_old, 0);
 		}
 		else {
-			v = ((v-IR_MIN)*128)/(IR_MAX-IR_MIN);
+			v = v*3300/4096;	// mV
+			if (v == 0)
+				v = 127;
+			else {
+				v = 126000/v;		// mm
+				v = ((v-40)*128)/(400-40);
+				if (v > 127)
+					v = 127;
+			}
 		}
 		if (v > v_old + DELTA ||
 			v < v_old - DELTA) {
@@ -61,6 +68,6 @@ void task_ir_ranger(void *arg)
 			midi_msg(0, EV_NOTE_ON, 0, v, 64);
 			//midi_msg(0, EV_CONTROL, 0, 0, v);
 		}
-		vTaskDelay(12);
+		vTaskDelay(1);
 	}
 }
