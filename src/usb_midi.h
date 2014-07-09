@@ -6,20 +6,21 @@
 #define USB_CLASS_AUDIO		0x01
 #define USB_SUBCLASS_MIDI	0x03
 
-#define USB_MIDI_ENDP_DIR_IN	0x80
-#define USB_MIDI_ENDP_DIR_OUT	0x00
+#define ENDP_DIR_IN		0x80
+#define ENDP_DIR_OUT	0x00
 
-#define USB_MIDI_DT_HEADER		0x01
-#define USB_MIDI_DT_IN_JACK		0x02
-#define USB_MIDI_DT_OUT_JACK	0x03
-#define USB_MIDI_DT_ELEMENT		0x04
+#define DT_HEADER		0x01
+#define DT_IN_JACK		0x02
+#define DT_OUT_JACK	0x03
+#define DT_ELEMENT		0x04
 
-#define USB_MIDI_DT_ENDP_MS_GENERAL		0x01
+#define DT_ENDP_MS_GENERAL		0x01
 
-#define USB_MIDI_JACK_TYPE_UNDEFINED	0x00
-#define USB_MIDI_JACK_TYPE_EMBEDDED		0x01
-#define USB_MIDI_JACK_TYPE_EXTERNAL		0x02
+#define JACK_TYPE_UNDEFINED	0x00
+#define JACK_TYPE_EMBEDDED		0x01
+#define JACK_TYPE_EXTERNAL		0x02
 
+#ifdef USB_DESCRIPTORS
 struct midi_header_descriptor {
 	uint8_t bFunctionLength;
 	uint8_t bDescriptorType;
@@ -27,7 +28,7 @@ struct midi_header_descriptor {
 	uint16_t bcdMSC;
 	uint16_t wTotalLength;
 } __attribute__((packed));
-#define USB_MIDI_HEADER_SIZE 7
+#define HEADER_SIZE 7
 
 struct midi_jack_in_descriptor {
 	uint8_t bLength;
@@ -37,7 +38,7 @@ struct midi_jack_in_descriptor {
 	uint8_t bJackID;
 	uint8_t iJack;
 } __attribute__((packed));
-#define USB_MIDI_JACK_IN_SIZE sizeof(struct midi_jack_in_descriptor)
+#define JACK_IN_SIZE sizeof(struct midi_jack_in_descriptor)
 
 struct midi_element_descriptor {
 	uint8_t bLength;
@@ -53,8 +54,8 @@ struct midi_element_descriptor {
 	uint8_t bmElementCaps;
 	uint8_t iElement;
 } __attribute__((packed));
-#define USB_MIDI_ELEMENT_SIZE sizeof(struct midi_element_descriptor)
-#define USB_MIDI_ELEMENT_CAPS_SIZE 1
+#define ELEMENT_SIZE sizeof(struct midi_element_descriptor)
+#define ELEMENT_CAPS_SIZE 1
 
 #define CAP_CUSTOM_UNDEFINED		(1 << 0)
 #define CAP_MIDI_CLOCK				(1 << 1)
@@ -80,27 +81,26 @@ struct midi_endpoint_descriptor {
 	uint8_t bDescriptorSubtype;
 	uint8_t bNumEmbMIDIJack;
 } __attribute__((packed));
-#define USB_MIDI_ENDPOINT_SIZE sizeof(struct midi_endpoint_descriptor)
+#define ENDPOINT_SIZE sizeof(struct midi_endpoint_descriptor)
 
-#ifdef USB_DESCRIPTORS
 static const struct {
 	struct midi_header_descriptor header;
 	struct midi_jack_in_descriptor jack_in_0; 
 	//struct midi_element_descriptor element_0;
 } __attribute__((packed)) midi_functional_descriptors = {
 	.header = {
-		.bFunctionLength = USB_MIDI_HEADER_SIZE,
+		.bFunctionLength = HEADER_SIZE,
 		.bDescriptorType = CS_INTERFACE,
-		.bDescriptorSubtype = USB_MIDI_DT_HEADER,
+		.bDescriptorSubtype = DT_HEADER,
 		.bcdMSC = 0x0100,
-		.wTotalLength = USB_MIDI_HEADER_SIZE +
-			USB_MIDI_JACK_IN_SIZE,
+		.wTotalLength = HEADER_SIZE +
+			JACK_IN_SIZE,
 	},
 	.jack_in_0 = {
-		.bLength = USB_MIDI_JACK_IN_SIZE,
+		.bLength = JACK_IN_SIZE,
 		.bDescriptorType = CS_INTERFACE,
-		.bDescriptorSubtype = USB_MIDI_DT_IN_JACK,
-		.bJackType = USB_MIDI_JACK_TYPE_EMBEDDED,
+		.bDescriptorSubtype = DT_IN_JACK,
+		.bJackType = JACK_TYPE_EMBEDDED,
 		.bJackID = 1,
 		.iJack = USBSTR_IDX(JACK_IN_0),
 	},
@@ -113,7 +113,7 @@ static const struct {
 	.bulk_0 = {
 		.bLength = sizeof(midi_bulk0_extra_descriptors),
 		.bDescriptorType = CS_ENDPOINT,
-		.bDescriptorSubtype = USB_MIDI_DT_ENDP_MS_GENERAL,
+		.bDescriptorSubtype = DT_ENDP_MS_GENERAL,
 		.bNumEmbMIDIJack = 1,
 	},
 	.bulk_0_jacks = {1},
@@ -123,7 +123,7 @@ static const struct usb_endpoint_descriptor midi_endp[] = {
 {
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
-	.bEndpointAddress = USB_MIDI_ENDP_DIR_IN | 0x1,
+	.bEndpointAddress = ENDP_DIR_IN | 0x1,
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 	.wMaxPacketSize = 64,
 	.bInterval = 0,

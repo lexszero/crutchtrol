@@ -21,4 +21,6 @@ USB_STRING_TABLE
 
 extern usbd_device *usb;
 
+extern void task_usb(void *arg);
+
 #endif /* USB_H */
