@@ -8,7 +8,8 @@
 	X(MANUFACTURER,	"LexsZero") \
 	X(PRODUCT,		"Crutchtrol") \
 	X(SERIAL,		"0xDEADBEEF") \
-	X(JACK_IN_0,	"Infrared")\
+	X(JACK_IN_0,	"Jack 0") \
+	X(ELEMENT_0,	"Infrared element") \
 
 #define X(name, value) USB_STRING_##name,
 enum {
